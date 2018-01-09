@@ -113,7 +113,7 @@ fn view(model: &Model) -> Html<Msg> {
                     step="10",
                     value=&model.bottleSize,
                     oninput=|e: InputData| Msg::BottleSize(e.value),
-                    id="qty", />
+                />
 
                 { "ml" }
 
@@ -126,7 +126,7 @@ fn view(model: &Model) -> Html<Msg> {
                         step="10",
                         value=&model.pg,
                         oninput=|e: InputData| Msg::PG(e.value),
-                        id="pg", />
+                    />
                     { "VG" }
                     <input
                         type="number",
@@ -135,7 +135,7 @@ fn view(model: &Model) -> Html<Msg> {
                         step="10",
                         value=&model.vg,
                         oninput=|e: InputData| Msg::VG(e.value),
-                        id="vg", />
+                    />
                 </div>
             </div>
             <div class="row",>
@@ -148,7 +148,7 @@ fn view(model: &Model) -> Html<Msg> {
                     step="2",
                     value=&model.nicMg,
                     oninput=|e: InputData| Msg::NicMg(get_num(e.value)),
-                    id="mg", />
+                />
                         { "mg/ml" }
                 { " (Or" }
                 <input
@@ -158,7 +158,7 @@ fn view(model: &Model) -> Html<Msg> {
                     step="0.2",
                     value=&model.nicMg / 10.0,
                     oninput=|e: InputData| Msg::NicMg(get_num(e.value) * 10.0),
-                    id="pct", />
+                />
                         { "%)" }
                 <br/>
 
@@ -170,7 +170,7 @@ fn view(model: &Model) -> Html<Msg> {
                     step="2",
                     value="72",
                     oninput=|e: InputData| Msg::NicBase(e.value),
-                    id="nicBase", />
+                />
                     {"mg/ml"}
                     {" (VG"}
                 <input
@@ -204,7 +204,6 @@ fn view(model: &Model) -> Html<Msg> {
             </div>
 
             <button
-                id="add",
                 onclick=|_| Msg::Log(String::from("TODO")),
             >
                 {"Add Flavour"}
