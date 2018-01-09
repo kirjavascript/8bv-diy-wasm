@@ -88,11 +88,11 @@ fn view(model: &Model) -> Html<Msg> {
     let mut base_pg = model.pg;
     let mut base_vg = model.vg;
 
-    match &model.nicType {
-        &NicType::VG => {
+    match model.nicType {
+        NicType::VG => {
             base_vg -= nicPct;
         },
-        &NicType::PG => {
+        NicType::PG => {
             base_pg -= nicPct;
         },
     }
@@ -173,33 +173,33 @@ fn view(model: &Model) -> Html<Msg> {
                     id="nicBase", />
                     {"mg/ml"}
                     {" (VG"}
-                    <input
-                        type="checkbox",
-                        onclick=|_| Msg::NicType(NicType::VG),
-                        checked={ model.nicType == NicType::VG },
-                    />
-                    {"PG"}
-                    <input
-                        type="checkbox",
-                        onclick=|_| Msg::NicType(NicType::PG),
-                        checked={ model.nicType == NicType::PG },
-                    />
-                    {")"}
+                <input
+                    type="checkbox",
+                    onclick=|_| Msg::NicType(NicType::VG),
+                    checked={ model.nicType == NicType::VG },
+                />
+                {"PG"}
+                <input
+                    type="checkbox",
+                    onclick=|_| Msg::NicType(NicType::PG),
+                    checked={ model.nicType == NicType::PG },
+                />
+                {")"}
             </div>
 
             <div class="box",>
                 { "Nicotine " }
-                { format!("{:.2}", nicPct) } {"%"}
+                { format!("{:.2}", nicPct) } {"% "}
                 { format!("{:.2}", get_ml(nicPct, &model)) } {"ml"}
             </div>
             <div class="box",>
                 { "PG " }
-                { format!("{:.2}", base_pg) } {"%"}
+                { format!("{:.2}", base_pg) } {"% "}
                 { format!("{:.2}", get_ml(base_pg, &model)) } {"ml"}
             </div>
             <div class="box",>
                 { "VG " }
-                { format!("{:.2}", base_vg) } {"%"}
+                { format!("{:.2}", base_vg) } {"% "}
                 { format!("{:.2}", get_ml(base_vg, &model)) } {"ml"}
             </div>
 
