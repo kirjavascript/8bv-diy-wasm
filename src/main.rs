@@ -3,6 +3,11 @@
 #[macro_use]
 extern crate yew;
 
+mod view;
+mod util;
+
+use util::{get_num, get_ml};
+
 use yew::html::*;
 use yew::services::console::ConsoleService;
 
@@ -11,7 +16,7 @@ struct Context {
 }
 
 #[derive(Debug)]
-struct Model {
+pub struct Model {
     bottleSize: f64,
     pg: f64,
     vg: f64,
@@ -22,15 +27,17 @@ struct Model {
 }
 
 #[derive(Debug)]
-struct Item {
+pub struct Item {
+    size: f64, // (ml)
+    nicType: NicType,
 }
 
 #[derive(Debug, PartialEq)]
-enum NicType {
+pub enum NicType {
     VG, PG,
 }
 
-enum Msg {
+pub enum Msg {
     Log(String),
     BottleSize(String),
     PG(String),
@@ -38,14 +45,14 @@ enum Msg {
     NicMg(f64),
     NicType(NicType),
     NicBase(String),
+    ItemNew,
+    ItemDel(usize),
+    ItemSize(usize, f64),
+    ItemPct(usize, f64),
+    ItemNicType(usize, NicType),
 }
 
-fn get_num(s: String) -> f64 {
-    match s.parse::<f64>() {
-        Ok(v) => v,
-        _ => 0.0,
-    }
-}
+
 
 fn update(context: &mut Context, model: &mut Model, msg: Msg) {
     match msg {
@@ -75,146 +82,28 @@ fn update(context: &mut Context, model: &mut Model, msg: Msg) {
             let v = get_num(str);
             model.nicBase = v;
         },
-    }
-}
-
-fn get_ml(num: f64, model: &Model) -> f64 {
-    (&model.bottleSize * num) / 100.0
-}
-
-fn view(model: &Model) -> Html<Msg> {
-    let nicPct = (&model.nicMg / &model.nicBase) * 100.0;
-
-    let mut base_pg = model.pg;
-    let mut base_vg = model.vg;
-
-    match model.nicType {
-        NicType::VG => {
-            base_vg -= nicPct;
+        Msg::ItemNew => {
+            model.items.push(Item {
+                size: 3.0,
+                nicType: NicType::PG,
+            });
         },
-        NicType::PG => {
-            base_pg -= nicPct;
+        Msg::ItemDel(i) => {
+            model.items.remove(i);
+        },
+        Msg::ItemSize(i, v) => {
+            model.items[i].size = v;
+        },
+        Msg::ItemPct(i, v) => {
+            model.items[i].size = get_ml(v, &model);
+        },
+        Msg::ItemNicType(i, t) => {
+            model.items[i].nicType = t;
         },
     }
-
-    // TODO:
-    // remove flavour liquid from base liquids
-
-    html! {
-        <div>
-            <h1>{ "mixer calc" }</h1>
-
-            <div class="row",>
-                { "Bottle Size" }
-                <input
-                    type="number",
-                    min="0",
-                    max="500",
-                    step="10",
-                    value=&model.bottleSize,
-                    oninput=|e: InputData| Msg::BottleSize(e.value),
-                />
-
-                { "ml" }
-
-                <div class="right",>
-                    { "PG" }
-                    <input
-                        type="number",
-                        min="0",
-                        max="100",
-                        step="10",
-                        value=&model.pg,
-                        oninput=|e: InputData| Msg::PG(e.value),
-                    />
-                    { "VG" }
-                    <input
-                        type="number",
-                        min="0",
-                        max="100",
-                        step="10",
-                        value=&model.vg,
-                        oninput=|e: InputData| Msg::VG(e.value),
-                    />
-                </div>
-            </div>
-            <div class="row",>
-
-                { "Nicotine" }
-                <input
-                    type="number",
-                    min="0",
-                    max="100",
-                    step="2",
-                    value=&model.nicMg,
-                    oninput=|e: InputData| Msg::NicMg(get_num(e.value)),
-                />
-                        { "mg/ml" }
-                { " (Or" }
-                <input
-                    type="number",
-                    min="0",
-                    max="10",
-                    step="0.2",
-                    value=&model.nicMg / 10.0,
-                    oninput=|e: InputData| Msg::NicMg(get_num(e.value) * 10.0),
-                />
-                        { "%)" }
-                <br/>
-
-                { "Nicotine Base" }
-                <input
-                    type="number",
-                    min="0",
-                    max="100",
-                    step="2",
-                    value="72",
-                    oninput=|e: InputData| Msg::NicBase(e.value),
-                />
-                    {"mg/ml"}
-                    {" (VG"}
-                <input
-                    type="checkbox",
-                    onclick=|_| Msg::NicType(NicType::VG),
-                    checked={ model.nicType == NicType::VG },
-                />
-                {"PG"}
-                <input
-                    type="checkbox",
-                    onclick=|_| Msg::NicType(NicType::PG),
-                    checked={ model.nicType == NicType::PG },
-                />
-                {")"}
-            </div>
-
-            <div class="box",>
-                { "Nicotine " }
-                { format!("{:.2}", nicPct) } {"% "}
-                { format!("{:.2}", get_ml(nicPct, &model)) } {"ml"}
-            </div>
-            <div class="box",>
-                { "PG " }
-                { format!("{:.2}", base_pg) } {"% "}
-                { format!("{:.2}", get_ml(base_pg, &model)) } {"ml"}
-            </div>
-            <div class="box",>
-                { "VG " }
-                { format!("{:.2}", base_vg) } {"% "}
-                { format!("{:.2}", get_ml(base_vg, &model)) } {"ml"}
-            </div>
-
-            <button
-                onclick=|_| Msg::Log(String::from("TODO")),
-            >
-                {"Add Flavour"}
-            </button>
-
-            <pre>
-                { format!("{:#?}", &model) }
-            </pre>
-        </div>
-    }
 }
+
+
 
 fn main() {
     yew::initialize();
@@ -231,6 +120,7 @@ fn main() {
         nicMg: 10.0,
         items: Vec::new(),
     };
-    app.mount(context, model, update, view);
+    app.mount(context, model, update, view::view);
+
     yew::run_loop();
 }
