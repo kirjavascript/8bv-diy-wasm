@@ -1,0 +1,7 @@
+[package]
+name = "vape-diy"
+version = "0.1.0"
+authors = ["kirjavascript <snkenjoi@gmail.com>"]
+
+[dependencies]
+yew = "0.2.0"
