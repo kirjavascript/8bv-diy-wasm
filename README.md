@@ -1,4 +1,4 @@
-8bv-diy-wasm
+8bvDIY-wasm
 ===
 
 Port of the generic eliquid mixing calculator to Rust/WebAssembly, using the yew framework
