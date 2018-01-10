@@ -2,10 +2,13 @@ mod styles;
 
 use super::yew::html::*;
 use super::{NicType, Msg, Model, Item};
-use super::util::{get_ml, get_num, get_pct};
+use super::util::{get_ml, get_num, get_pct, get_grams, Material};
 
 pub fn view(model: &Model) -> Html<Msg> {
     let nicPct = (&model.nicMg / &model.nicBase) * 100.0;
+    let nicGrams = get_grams(get_ml(nicPct, &model), Material::Nic);
+    // TODO: check js version
+
 
     let mut base_pg = model.pg;
     let mut base_vg = model.vg;
@@ -31,11 +34,6 @@ pub fn view(model: &Model) -> Html<Msg> {
             },
         }
     }
-
-    // TODO
-    // StyleSheet::new()
-    // styles.render()
-    // wasm-gc
 
     html! {
         <div>
@@ -134,18 +132,19 @@ pub fn view(model: &Model) -> Html<Msg> {
 
             <div class="box",>
                 { "Nicotine " }
-                { format!("{:.2}", nicPct) } {"% "}
-                { format!("{:.2}", get_ml(nicPct, &model)) } {"ml"}
+                { format!("{:.2}% ", nicPct) }
+                { format!("{:.2}ml", get_ml(nicPct, &model)) }
+                { format!("{:.2}g (wrong)", nicGrams) }
             </div>
             <div class="box",>
                 { "PG " }
-                { format!("{:.2}", base_pg) } {"% "}
-                { format!("{:.2}", get_ml(base_pg, &model)) } {"ml"}
+                { format!("{:.2}% ", base_pg) }
+                { format!("{:.2}ml", get_ml(base_pg, &model)) }
             </div>
             <div class="box",>
                 { "VG " }
-                { format!("{:.2}", base_vg) } {"% "}
-                { format!("{:.2}", get_ml(base_vg, &model)) } {"ml"}
+                { format!("{:.2}% ", base_vg) }
+                { format!("{:.2}ml", get_ml(base_vg, &model)) }
             </div>
 
             { for model.items.iter().enumerate().map(|(i, item)| {
