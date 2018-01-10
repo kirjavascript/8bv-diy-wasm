@@ -9,8 +9,4 @@ To compile for wasm32-unknown-unknown, run with;
 cargo +nightly web start --target-webasm
 ```
 
-
-    // TODO
-    // StyleSheet::new()
-    // styles.render()
-    // wasm-gc
+![](https://i.imgur.com/vfTYcRW.png)
