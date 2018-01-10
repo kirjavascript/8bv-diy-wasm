@@ -29,7 +29,7 @@ pub struct Model {
 #[derive(Debug)]
 pub struct Item {
     size: f64, // (ml)
-    nicType: NicType,
+    flavType: NicType,
 }
 
 #[derive(Debug, PartialEq)]
@@ -49,7 +49,7 @@ pub enum Msg {
     ItemDel(usize),
     ItemSize(usize, f64),
     ItemPct(usize, f64),
-    ItemNicType(usize, NicType),
+    ItemFlavType(usize, NicType),
 }
 
 
@@ -85,7 +85,7 @@ fn update(context: &mut Context, model: &mut Model, msg: Msg) {
         Msg::ItemNew => {
             model.items.push(Item {
                 size: 3.0,
-                nicType: NicType::PG,
+                flavType: NicType::PG,
             });
         },
         Msg::ItemDel(i) => {
@@ -97,8 +97,8 @@ fn update(context: &mut Context, model: &mut Model, msg: Msg) {
         Msg::ItemPct(i, v) => {
             model.items[i].size = get_ml(v, &model);
         },
-        Msg::ItemNicType(i, t) => {
-            model.items[i].nicType = t;
+        Msg::ItemFlavType(i, t) => {
+            model.items[i].flavType = t;
         },
     }
 }

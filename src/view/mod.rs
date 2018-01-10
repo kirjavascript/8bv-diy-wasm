@@ -5,9 +5,17 @@ use super::{NicType, Msg, Model, Item};
 use super::util::{get_ml, get_num, get_pct, get_grams, Material};
 
 pub fn view(model: &Model) -> Html<Msg> {
+
+    // nicotine
     let nicPct = (&model.nicMg / &model.nicBase) * 100.0;
-    let nicGrams = get_grams(get_ml(nicPct, &model), Material::Nic);
-    // TODO: check js version
+    let nicInputPct = &model.nicMg / 10.0;
+    let nicStrength = get_grams(nicInputPct, Material::Nic);
+    let nicMaterialType = match model.nicType {
+        NicType::VG => Material::VG,
+        NicType::PG => Material::PG,
+    };
+    let nicGrams = (nicStrength + ((100.0 - nicInputPct) * get_grams(1.0, nicMaterialType))) / 100.0;
+    let nicWeight = get_ml(nicPct, &model) * nicGrams;
 
 
     let mut base_pg = model.pg;
@@ -25,7 +33,7 @@ pub fn view(model: &Model) -> Html<Msg> {
 
     // remove liquids from base
     for item in &model.items {
-        match item.nicType {
+        match item.flavType {
             NicType::VG => {
                 base_vg -= get_pct(item.size, &model);
             },
@@ -35,9 +43,17 @@ pub fn view(model: &Model) -> Html<Msg> {
         }
     }
 
+    // PG
+    let pg_ml = get_ml(base_pg, &model);
+    let pg_grams = get_grams(pg_ml, Material::PG);
+    // VG
+    let vg_ml = get_ml(base_vg, &model);
+    let vg_grams = get_grams(vg_ml, Material::VG);
+
     html! {
         <div>
-            <h1>{ "mixer calc" }</h1>
+
+            <h1>{"mixer calc"}</h1>
 
             <style>
                 { styles::STYLESHEET }
@@ -58,7 +74,6 @@ pub fn view(model: &Model) -> Html<Msg> {
                 </div>
 
                 <div >
-                    { "PG" }
                     <input
                         type="number",
                         min="0",
@@ -67,7 +82,7 @@ pub fn view(model: &Model) -> Html<Msg> {
                         value=&model.pg,
                         oninput=|e: InputData| Msg::PG(e.value),
                     />
-                    { "VG" }
+                    { "PG" }
                     <input
                         type="number",
                         min="0",
@@ -76,6 +91,13 @@ pub fn view(model: &Model) -> Html<Msg> {
                         value=&model.vg,
                         oninput=|e: InputData| Msg::VG(e.value),
                     />
+                    { "VG" }
+                    <button
+                        class="add",
+                        onclick=|_| Msg::ItemNew,
+                    >
+                        {"Add Flavour"}
+                    </button>
                 </div>
             </div>
             <div class="row",>
@@ -97,7 +119,7 @@ pub fn view(model: &Model) -> Html<Msg> {
                             min="0",
                             max="10",
                             step="0.2",
-                            value=&model.nicMg / 10.0,
+                            value=nicInputPct,
                             oninput=|e: InputData| Msg::NicMg(get_num(e.value) * 10.0),
                             />
                             { "%)" }
@@ -110,7 +132,7 @@ pub fn view(model: &Model) -> Html<Msg> {
                             min="0",
                             max="100",
                             step="2",
-                            value="72",
+                            value=&model.nicBase,
                             oninput=|e: InputData| Msg::NicBase(e.value),
                             />
                             {"mg/ml"}
@@ -130,32 +152,34 @@ pub fn view(model: &Model) -> Html<Msg> {
                     </div>
                 </div>
 
-            <div class="box",>
+            <div class="row",>
                 { "Nicotine " }
-                { format!("{:.2}% ", nicPct) }
-                { format!("{:.2}ml", get_ml(nicPct, &model)) }
-                { format!("{:.2}g (wrong)", nicGrams) }
+                <div>
+                    { format!("{:.2}% - ", nicPct) }
+                    { format!("{:.2}ml - ", get_ml(nicPct, &model)) }
+                    { format!("{:.2}g", nicWeight) }
+                </div>
             </div>
-            <div class="box",>
+            <div class="row",>
                 { "PG " }
-                { format!("{:.2}% ", base_pg) }
-                { format!("{:.2}ml", get_ml(base_pg, &model)) }
+                <div>
+                    { format!("{:.2}% - ", base_pg) }
+                    { format!("{:.2}ml - ", pg_ml) }
+                    { format!("{:.2}g", pg_grams) }
+                </div>
             </div>
-            <div class="box",>
+            <div class="row",>
                 { "VG " }
-                { format!("{:.2}% ", base_vg) }
-                { format!("{:.2}ml", get_ml(base_vg, &model)) }
+                <div>
+                    { format!("{:.2}% - ", base_vg) }
+                    { format!("{:.2}ml - ", vg_ml) }
+                    { format!("{:.2}g", vg_grams) }
+                </div>
             </div>
 
             { for model.items.iter().enumerate().map(|(i, item)| {
                 view_item((i, item), &model)
             }) }
-
-            <button
-                onclick=|_| Msg::ItemNew,
-            >
-                {"Add Flavour"}
-            </button>
 
             // <pre>
             //     { format!("{:#?}", &model) }
@@ -166,44 +190,53 @@ pub fn view(model: &Model) -> Html<Msg> {
 }
 
 fn view_item((i, item): (usize, &Item), model: &Model) -> Html<Msg> {
+    let materialType = match item.flavType {
+        NicType::VG => Material::VG,
+        NicType::PG => Material::PG,
+    };
     html! {
-        <div>
-            <input
-                type="number",
-                min="0",
-                max="500",
-                step="1",
-                value=item.size,
-                oninput=move |e: InputData| Msg::ItemSize(i, get_num(e.value)),
-                />
-            {"ml "}
+        <div class="row",>
+            <div>
+                {"Flavour"}
+                <input
+                    type="number",
+                    min="0",
+                    max="500",
+                    step="any",
+                    value=item.size,
+                    oninput=move |e: InputData| Msg::ItemSize(i, get_num(e.value)),
+                    />
+                    {"ml "}
 
-            <input
-                type="number",
-                min="0",
-                max="500",
-                step="1",
-                value=format!("{:.2}", get_pct(item.size, &model)),
-                oninput=move |e: InputData| Msg::ItemPct(i, get_num(e.value)),
-                />
-            {"% "}
-            {format!("{:?}", item.nicType)}
-            {" (VG"}
-            <input
-                type="checkbox",
-                onclick=move |_| Msg::ItemNicType(i, NicType::VG),
-                checked={ item.nicType == NicType::VG },
-                />
-                {"PG"}
-            <input
-                type="checkbox",
-                onclick=move |_| Msg::ItemNicType(i, NicType::PG),
-                checked={ item.nicType == NicType::PG },
-                />
-                {")"}
-            <button onclick=move |_| Msg::ItemDel(i),>
-                {"delete"}
-            </button>
+                <input
+                    type="number",
+                    min="0",
+                    max="500",
+                    step="any",
+                    value=format!("{:.2}", get_pct(item.size, &model)),
+                    oninput=move |e: InputData| Msg::ItemPct(i, get_num(e.value)),
+                    />
+                    {"% "}
+                {format!("{:.2}g ", get_grams(item.size, materialType))}
+            </div>
+            <div>
+                {" (VG"}
+                <input
+                    type="checkbox",
+                    onclick=move |_| Msg::ItemFlavType(i, NicType::VG),
+                    checked={ item.flavType == NicType::VG },
+                    />
+                    {"PG"}
+                <input
+                    type="checkbox",
+                    onclick=move |_| Msg::ItemFlavType(i, NicType::PG),
+                    checked={ item.flavType == NicType::PG },
+                    />
+                    {")"}
+                <button class="delete", onclick=move |_| Msg::ItemDel(i),>
+                    {"delete"}
+                </button>
+            </div>
         </div>
     }
 }
